@@ -71,8 +71,8 @@ command -v podman >/dev/null || die "podman is needed to build the RPM in a Fedo
 KCORE=$(rpm -q --qf '%{VERSION}-%{RELEASE}' kernel-core) || die "kernel-core is not installed?"
 [ "$KCORE.$(uname -m)" = "$KVER" ] || die "kernel-core $KCORE does not match the booted kernel $KVER. Reboot into the latest deployment first."
 
-if ! lspci -n 2>/dev/null | grep -qiE '10de:(22|24|25)[0-9a-f]{2}'; then
-    echo "warning: no GA102/GA103/GA104/GA106 card found by lspci; continuing anyway." >&2
+if ! lspci -n 2>/dev/null | grep -qiE '10de:(22|24|25|26|27|28)[0-9a-f]{2}'; then
+    echo "warning: no supported GA10x/AD10x card found by lspci; continuing anyway." >&2
 fi
 
 SB=off
@@ -123,7 +123,10 @@ REL=$(date +%Y%m%d%H%M)
 rm -rf "$OUT/src" "$OUT/rpms" "$OUT/gpu-unlock-local.spec"
 mkdir -p "$OUT/src/assets" "$OUT/src/licenses" "$OUT/rpms"
 cp "$KO" packaging/boot/dracut.conf "$OUT/src/"
-for f in booter_load_ga102.bin gsp_ga10x.bin gsp_boot_ga102.bin gsp_boot_desc_ga102.bin "v67-ga102-$NV.bin"; do
+for f in booter_load_ga102.bin booter_load_ad102.bin gsp_ga10x.bin \
+         gsp_boot_ga102.bin gsp_boot_desc_ga102.bin \
+         gsp_boot_ad102.bin gsp_boot_desc_ad102.bin \
+         "v67-ga102-$NV.bin" "v67-ad102-$NV-four-plm.bin"; do
     cp "$CACHE/assets/$f" "$OUT/src/assets/"
 done
 cp licenses/*.txt "$CACHE/assets/NVIDIA-LICENSE" firmware/NOTICE.md "$OUT/src/licenses/"
@@ -216,7 +219,7 @@ sudo ostree --repo=/ostree/repo cat "$COMMIT" "/usr/lib/modules/$KVER/initramfs.
 lsinitrd "$OUT/initramfs.img" 2>/dev/null > "$OUT/initramfs.txt" || :
 rm -f "$OUT/initramfs.img"
 grep -q 'extra/gpu_unlock.ko' "$OUT/initramfs.txt" || die "gpu_unlock.ko is not in the pending initramfs; it would load after nvidia."
-grep -q "firmware/gpu-unlock/$NV/v67-ga102-$NV.bin" "$OUT/initramfs.txt" || die "the gpu-unlock firmware is not in the pending initramfs."
+grep -qE "firmware/gpu-unlock/$NV/v67-(ga|ad)102" "$OUT/initramfs.txt" || die "the gpu-unlock firmware is not in the pending initramfs."
 PRE=$(sed -n 's/^ *rd\.driver\.pre=//p' "$OUT/initramfs.txt")
 [ "$(echo "$PRE" | grep -m1 -xE 'gpu_unlock|nvidia')" = gpu_unlock ] ||
     die "the initramfs loads nvidia before gpu_unlock; the unlock would fail with -EBUSY. Order: $(echo $PRE)"

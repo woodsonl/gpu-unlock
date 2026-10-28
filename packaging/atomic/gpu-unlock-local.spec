@@ -23,7 +23,10 @@ dracut drop-in that puts both in the initramfs.
 
 %install
 install -Dm644 %{_sourcedir}/gpu_unlock.ko %{buildroot}/usr/lib/modules/%{kver}/extra/gpu_unlock.ko
-for f in booter_load_ga102.bin gsp_ga10x.bin gsp_boot_ga102.bin gsp_boot_desc_ga102.bin v67-ga102-%{nv}.bin; do
+for f in booter_load_ga102.bin booter_load_ad102.bin gsp_ga10x.bin \
+         gsp_boot_ga102.bin gsp_boot_desc_ga102.bin \
+         gsp_boot_ad102.bin gsp_boot_desc_ad102.bin \
+         v67-ga102-%{nv}.bin v67-ad102-%{nv}-four-plm.bin; do
     install -Dm644 %{_sourcedir}/assets/$f %{buildroot}/usr/lib/firmware/gpu-unlock/%{nv}/$f
 done
 # dracut reads drop-ins in name order and loads force_drivers in that order.
