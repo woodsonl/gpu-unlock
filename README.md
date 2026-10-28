@@ -124,6 +124,58 @@ A: It's very unlikely, this only unlocks a small handicap Nvidia has put in plac
 - Q: How can I assist?  
 A: Please consider [donating](#support-me) so I can purchase more GPUs <3
 
+### Secure Boot, Fedora Atomic and other install paths
+
+With Secure Boot on, the kernel loads `gpu_unlock` only if it is signed with
+an enrolled key. DKMS signs what it builds with the `mok_signing_key` and
+`mok_certificate` from its framework config; without them it uses a key of
+its own, which has to be enrolled once with `mokutil --import` and a reboot
+into MokManager.
+
+On Fedora with RPM Fusion `akmod-nvidia`, the akmods key is already
+enrolled, since the NVIDIA module is signed with it. Point DKMS at it and
+nothing new needs enrolling:
+
+```sh
+sudo mkdir -p /etc/dkms/framework.conf.d
+printf 'mok_signing_key=/etc/pki/akmods/private/private_key.priv\nmok_certificate=/etc/pki/akmods/certs/public_key.der\n' |
+  sudo tee /etc/dkms/framework.conf.d/akmods-key.conf
+```
+
+`modinfo gpu_unlock | grep signer` should then print the same signer as
+`modinfo nvidia | grep signer`.
+
+On Fedora Atomic desktops (Silverblue, Kinoite, Bazzite) `/usr` is
+read-only and `make install` does not apply:
+`packaging/atomic/install.sh` builds, signs and layers a local RPM and
+wires the initramfs order in one run. Full walkthrough in
+[Fedora Atomic and Secure Boot](docs/Fedora%20Atomic%20and%20Secure%20Boot.md).
+
+The read-only `tools/read_sm_rates.py` reports the SM issue-rate
+modifiers through the RM ioctl without touching BAR0, for stock-state
+checks before a first unlock.
+
+## Tested cards
+
+Results reported by users; gains are dense GEMM throughput from each report's own benchmark, so they are not directly comparable. The power limit matters.
+
+| Chip | Card | PCI ID | Result | BF16 GEMM gain | Reports |
+| ----- | --------------------------------- | ----------- | ----------------------------------- | -------------- | ------- |
+| AD102 | RTX 4090                          | `10de:2684` | Unlocked                            | +17% cuBLAS, +100% raw mma | [#24](https://github.com/Zagitta/gpu-unlock/pull/24) |
+| AD103 | RTX 4080 SUPER                    | `10de:2702` | Unlocked                            | +69–85%        | [#24](https://github.com/Zagitta/gpu-unlock/pull/24) (two boards) |
+| AD103 | RTX 4080                          | `10de:2704` | Unlocked                            | +53%           | [#24](https://github.com/Zagitta/gpu-unlock/pull/24) |
+| AD104 | RTX 4070 Ti                       | `10de:2782` | Unlocked                            | +84%           | [#24](https://github.com/Zagitta/gpu-unlock/pull/24) |
+| AD106 | RTX 4060 Ti 8 GB                  | `10de:2803` | Unlocked                            | +54%           | [#24](https://github.com/Zagitta/gpu-unlock/pull/24) |
+| AD106 | RTX 4060 Ti 16 GB                 | `10de:2805` | Unlocked                            | +78%           | [#24](https://github.com/Zagitta/gpu-unlock/pull/24) ([kevinboss](https://github.com/Zagitta/gpu-unlock/pull/24#issuecomment-6404993003), [ada#98](https://github.com/JustAResearcher/gpu-unlock-ada/issues/98)) |
+| AD103 | RTX 4070                          | `10de:2709` | Unlocked                            | canary report | [#24](https://github.com/Zagitta/gpu-unlock/pull/24) |
+| AD103 | RTX 4090 Laptop                   | `10de:2757` | Unlock runs, throughput unchanged   | —              | [#24](https://github.com/Zagitta/gpu-unlock/pull/24) |
+| AD104 | RTX 4070 Ti SUPER                 | `10de:2705` | Unlocked                            | canary report | [#24](https://github.com/Zagitta/gpu-unlock/pull/24) |
+| AD104 | RTX 4070 SUPER                    | `10de:2783` | Unlocked                            | canary report | [#24](https://github.com/Zagitta/gpu-unlock/pull/24) |
+| AD104 | RTX 4070                          | `10de:2786` | Unlocked                            | canary report | [#24](https://github.com/Zagitta/gpu-unlock/pull/24) |
+| AD107M | RTX 4060 Laptop                  | `10de:28a0` | Unlocked                            | power-capped 35/80 W | [#24](https://github.com/Zagitta/gpu-unlock/pull/24) |
+| AD107 | RTX 4060                         | `10de:2882` | Unlocked                            | +45%           | [#24](https://github.com/Zagitta/gpu-unlock/pull/24) (two boards, one Secure Boot enforced) |
+| AD107M | RTX 4050 Mobile                  | `10de:28e1` | Unlocked                            | canary report | [#24](https://github.com/Zagitta/gpu-unlock/pull/24) |
+
 ## Local build
 
 Every build downloads the NVIDIA/CachyOS inputs over HTTPS and generates

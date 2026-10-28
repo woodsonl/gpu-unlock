@@ -1,3 +1,15 @@
+gpu-unlock (2.0.1) UNRELEASED; urgency=medium
+
+  * Downstream on upstream 2.0: wait for GFW before reading the layout
+    on a cold card and keep polling gfw_eval on PRI-error samples
+    (Thunderbolt eGPU boots); Fedora Atomic install script and local
+    RPM spec; Secure Boot signing with the enrolled akmods key and the
+    Fedora Atomic walkthrough docs; read-only SM issue-rate diagnostic;
+    tested-cards table with the 14 Ada rows; boot-log and benchmark
+    evidence for the 4080 SUPER and 4060 Ti.
+
+ -- woodsonl <65194841+woodsonl@users.noreply.github.com>  Wed, 28 Oct 2026 00:30:00 +0000
+
 gpu-unlock (2.0.0) UNRELEASED; urgency=medium
 
   * Add Turing and Ada Lovelace support.

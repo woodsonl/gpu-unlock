@@ -1,7 +1,7 @@
 %global nv 610.43.03
 
 Name: gpu-unlock
-Version: 2.0.0
+Version: 2.0.1
 Release: 1%{?dist}
 Summary: RTX 3090 BF16 unlock before the NVIDIA driver loads
 License: GPL-2.0-only
@@ -130,6 +130,11 @@ fi
 %changelog
 * Tue Oct 27 2026 Zagitta <zetlon+github@gmail.com> - 2.0.0-1
 - Add Turing and Ada Lovelace support.
+
+* Wed Oct 28 2026 woodsonl <65194841+woodsonl@users.noreply.github.com> - 2.0.1-1
+- Downstream on 2.0: GFW-before-layout and PRI-error polling, Fedora
+  Atomic install path, akmods-key Secure Boot doc, read-only rate
+  diagnostic, tested-cards table, unlock evidence
 
 * Mon Sep 28 2026 Zagitta <zetlon+github@gmail.com> - 1.1.0-1
 - Initial release.
